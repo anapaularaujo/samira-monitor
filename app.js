@@ -639,6 +639,7 @@ function readSpreadsheet(file) {
 }
 
 function parseCsv(text) {
+  const delimiter = detectCsvDelimiter(text);
   const rows = [];
   let current = "";
   let row = [];
@@ -653,7 +654,7 @@ function parseCsv(text) {
       index += 1;
     } else if (char === '"') {
       insideQuotes = !insideQuotes;
-    } else if ((char === "," || char === ";") && !insideQuotes) {
+    } else if (char === delimiter && !insideQuotes) {
       row.push(current.trim());
       current = "";
     } else if ((char === "\n" || char === "\r") && !insideQuotes) {
@@ -674,6 +675,28 @@ function parseCsv(text) {
   return dataRows.map((dataRow) =>
     Object.fromEntries(headers.map((header, index) => [header, dataRow[index] ?? ""]))
   );
+}
+
+function detectCsvDelimiter(text) {
+  const firstLine = text.split(/\r?\n/, 1)[0] || "";
+  const countDelimiter = (delimiter) => {
+    let count = 0;
+    let insideQuotes = false;
+    for (let index = 0; index < firstLine.length; index += 1) {
+      const char = firstLine[index];
+      const next = firstLine[index + 1];
+      if (char === '"' && next === '"') {
+        index += 1;
+      } else if (char === '"') {
+        insideQuotes = !insideQuotes;
+      } else if (char === delimiter && !insideQuotes) {
+        count += 1;
+      }
+    }
+    return count;
+  };
+
+  return countDelimiter(";") >= countDelimiter(",") ? ";" : ",";
 }
 
 function loadSampleTickets() {
