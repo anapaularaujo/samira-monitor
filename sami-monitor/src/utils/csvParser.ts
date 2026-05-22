@@ -1,5 +1,5 @@
 import Papa from 'papaparse'
-import readXlsxFile from 'read-excel-file'
+import { readSheet, type Row } from 'read-excel-file/browser'
 import type { CsvTicketRow, UploadResult } from '../types'
 import { mapRowToTicket, requiredColumns } from './mockData'
 
@@ -63,7 +63,7 @@ const parseCsv = (file: File) =>
   })
 
 const parseWorkbook = async (file: File): Promise<UploadResult> => {
-  const matrix = await readXlsxFile(file)
+  const matrix: Row[] = await readSheet(file)
 
   const [headerRow = [], ...bodyRows] = matrix
   validateHeaders(headerRow.map(normalizeHeader))
