@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Samira Monitor | Tickets por Atendimento</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Navegação principal">
+        <div class="brand">
+          <div class="brand-mark">SM</div>
+          <div>
+            <strong>Samira Monitor</strong>
+            <span>Tickets Intelligence</span>
+          </div>
+        </div>
+
+        <nav class="nav-menu">
+          <button class="nav-item active" type="button" data-route="dashboard">
+            <span>📊</span>
+            Dashboard Executivo
+          </button>
+          <button class="nav-item" type="button" data-route="upload">
+            <span>📁</span>
+            Upload de Dados
+          </button>
+          <button class="nav-item" type="button" data-route="analysis">
+            <span>🔍</span>
+            Análise Detalhada
+          </button>
+          <button class="nav-item" type="button" data-route="criteria">
+            <span>⚙️</span>
+            Configurações
+          </button>
+          <button class="nav-item" type="button" data-route="reports">
+            <span>📈</span>
+            Relatórios
+          </button>
+        </nav>
+
+        <div class="sidebar-card">
+          <span class="eyebrow">Base ativa</span>
+          <strong id="sidebarTicketCount">0 tickets</strong>
+          <small id="sidebarRange">Sem período carregado</small>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <span class="eyebrow">Painel navegável</span>
+            <h1 id="pageTitle">Dashboard Executivo</h1>
+          </div>
+          <div class="topbar-actions">
+            <button class="ghost-button" type="button" id="loadSampleBtn">Carregar exemplo</button>
+            <button class="primary-button" type="button" id="exportFilteredBtn">Exportar filtrado</button>
+          </div>
+        </header>
+
+        <section class="filter-panel" aria-label="Filtros avançados">
+          <div class="filter-heading">
+            <div>
+              <span class="eyebrow">Filtros avançados</span>
+              <strong>Refine a análise em tempo real</strong>
+            </div>
+            <button class="link-button" type="button" id="clearFiltersBtn">Limpar filtros</button>
+          </div>
+          <div class="filters-grid">
+            <label>
+              Início
+              <input type="date" id="filterStart" />
+            </label>
+            <label>
+              Fim
+              <input type="date" id="filterEnd" />
+            </label>
+            <label>
+              Atendente
+              <select id="filterAgent">
+                <option value="">Todos</option>
+              </select>
+            </label>
+            <label>
+              Canal
+              <select id="filterChannel">
+                <option value="">Todos</option>
+              </select>
+            </label>
+            <label>
+              Status
+              <select id="filterStatus">
+                <option value="">Todos</option>
+              </select>
+            </label>
+            <label>
+              Prioridade
+              <select id="filterPriority">
+                <option value="">Todas</option>
+              </select>
+            </label>
+            <label class="wide-filter">
+              Busca livre
+              <input type="search" id="filterSearch" placeholder="Cliente, ticket, categoria ou descrição" />
+            </label>
+          </div>
+        </section>
+
+        <section class="view active" id="dashboardView" data-view="dashboard">
+          <div class="kpi-grid" id="kpiGrid"></div>
+
+          <div class="content-grid two-columns">
+            <article class="card">
+              <div class="card-header">
+                <div>
+                  <span class="eyebrow">Tendência</span>
+                  <h2>Tickets por período</h2>
+                </div>
+              </div>
+              <div class="bar-chart" id="ticketsTrendChart"></div>
+            </article>
+
+            <article class="card">
+              <div class="card-header">
+                <div>
+                  <span class="eyebrow">Distribuição</span>
+                  <h2>Status dos atendimentos</h2>
+                </div>
+              </div>
+              <div class="donut-card">
+                <div class="donut" id="statusDonut" aria-label="Distribuição de status"></div>
+                <div class="legend-list" id="statusLegend"></div>
+              </div>
+            </article>
+          </div>
+
+          <div class="content-grid two-columns">
+            <article class="card">
+              <div class="card-header">
+                <div>
+                  <span class="eyebrow">Operação</span>
+                  <h2>Ranking por atendente</h2>
+                </div>
+              </div>
+              <div class="ranking-list" id="agentRanking"></div>
+            </article>
+
+            <article class="card">
+              <div class="card-header">
+                <div>
+                  <span class="eyebrow">Critérios</span>
+                  <h2>Alertas de qualidade</h2>
+                </div>
+              </div>
+              <div class="alert-list" id="qualityAlerts"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="uploadView" data-view="upload">
+          <div class="content-grid two-columns">
+            <article class="card upload-card">
+              <div class="card-header">
+                <div>
+                  <span class="eyebrow">Excel / CSV</span>
+                  <h2>Upload de planilhas</h2>
+                </div>
+              </div>
+              <label class="dropzone" for="fileInput">
+                <input id="fileInput" type="file" accept=".csv,.xlsx,.xls" />
+                <span class="drop-icon">⬆</span>
+                <strong>Arraste ou selecione sua planilha</strong>
+                <small>Arquivos .csv, .xlsx ou .xls com histórico de tickets</small>
+              </label>
+              <div class="upload-actions">
+                <button class="ghost-button" type="button" id="downloadTemplateBtn">Baixar modelo CSV</button>
+                <button class="primary-button" type="button" id="replaceWithSampleBtn">Usar dados de exemplo</button>
+              </div>
+              <p class="hint">
+                Colunas reconhecidas: ticket, data_abertura, data_fechamento, atendente, canal, status,
+                prioridade, categoria, cliente, satisfacao, sla_horas, tempo_atendimento_horas,
+                primeira_resposta_horas, fcr e descricao.
+              </p>
+            </article>
+
+            <article class="card">
+              <div class="card-header">
+                <div>
+                  <span class="eyebrow">Validação</span>
+                  <h2>Resumo do arquivo</h2>
+                </div>
+              </div>
+              <div class="upload-summary" id="uploadSummary">
+                <div>
+                  <span>Total carregado</span>
+                  <strong>0</strong>
+                </div>
+                <div>
+                  <span>Campos mapeados</span>
+                  <strong>0</strong>
+                </div>
+                <div>
+                  <span>Última carga</span>
+                  <strong>Nenhuma</strong>
+                </div>
+              </div>
+              <div class="message-box" id="uploadMessage">
+                Carregue uma planilha para atualizar todos os indicadores automaticamente.
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="analysisView" data-view="analysis">
+          <article class="card">
+            <div class="card-header">
+              <div>
+                <span class="eyebrow">Base filtrada</span>
+                <h2>Análise detalhada de tickets</h2>
+              </div>
+              <button class="ghost-button" type="button" id="exportTableBtn">Exportar tabela</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ticket</th>
+                    <th>Abertura</th>
+                    <th>Cliente</th>
+                    <th>Atendente</th>
+                    <th>Status</th>
+                    <th>Prioridade</th>
+                    <th>Canal</th>
+                    <th>SLA</th>
+                    <th>Satisfação</th>
+                  </tr>
+                </thead>
+                <tbody id="ticketsTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="view" id="criteriaView" data-view="criteria">
+          <div class="content-grid two-columns">
+            <article class="card">
+              <div class="card-header">
+                <div>
+                  <span class="eyebrow">Critérios configuráveis</span>
+                  <h2>Parâmetros de monitoramento</h2>
+                </div>
+              </div>
+              <form class="criteria-form" id="criteriaForm">
+                <label>
+                  SLA alvo por ticket (horas)
+                  <input type="number" id="criteriaSla" min="1" step="1" />
+                </label>
+                <label>
+                  Meta de satisfação (%)
+                  <input type="number" id="criteriaSatisfaction" min="0" max="100" step="1" />
+                </label>
+                <label>
+                  Alerta de backlog aberto
+                  <input type="number" id="criteriaBacklog" min="1" step="1" />
+                </label>
+                <label>
+                  Meta FCR - resolução no primeiro contato (%)
+                  <input type="number" id="criteriaFcr" min="0" max="100" step="1" />
+                </label>
+                <label class="wide-filter">
+                  Palavras-chave críticas
+                  <input type="text" id="criteriaKeywords" placeholder="cancelamento, fraude, reclamação" />
+                </label>
+                <button class="primary-button" type="submit">Salvar critérios</button>
+              </form>
+            </article>
+
+            <article class="card">
+              <div class="card-header">
+                <div>
+                  <span class="eyebrow">Impacto</span>
+                  <h2>Leitura dos critérios atuais</h2>
+                </div>
+              </div>
+              <div class="criteria-impact" id="criteriaImpact"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="reportsView" data-view="reports">
+          <div class="content-grid two-columns">
+            <article class="card">
+              <div class="card-header">
+                <div>
+                  <span class="eyebrow">Relatórios customizados</span>
+                  <h2>Monte sua visão</h2>
+                </div>
+              </div>
+              <form class="report-builder" id="reportForm">
+                <label>
+                  Agrupar por
+                  <select id="reportDimension">
+                    <option value="agent">Atendente</option>
+                    <option value="channel">Canal</option>
+                    <option value="status">Status</option>
+                    <option value="priority">Prioridade</option>
+                    <option value="category">Categoria</option>
+                  </select>
+                </label>
+                <label>
+                  Métrica principal
+                  <select id="reportMetric">
+                    <option value="count">Volume de tickets</option>
+                    <option value="sla">Cumprimento de SLA</option>
+                    <option value="satisfaction">Satisfação média</option>
+                    <option value="handleTime">Tempo médio de atendimento</option>
+                  </select>
+                </label>
+                <button class="primary-button" type="submit">Gerar relatório</button>
+              </form>
+              <div class="report-actions">
+                <button class="ghost-button" type="button" id="exportReportCsvBtn">Exportar CSV</button>
+                <button class="ghost-button" type="button" id="exportReportJsonBtn">Exportar JSON</button>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-header">
+                <div>
+                  <span class="eyebrow">Resultado</span>
+                  <h2 id="reportTitle">Tickets por atendente</h2>
+                </div>
+              </div>
+              <div class="report-list" id="reportResults"></div>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
