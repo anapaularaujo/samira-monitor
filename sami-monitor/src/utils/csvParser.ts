@@ -1,5 +1,5 @@
 import Papa from 'papaparse'
-import * as XLSX from 'xlsx'
+import readXlsxFile from 'read-excel-file'
 import type { CsvTicketRow, UploadResult } from '../types'
 import { mapRowToTicket, requiredColumns } from './mockData'
 
@@ -63,13 +63,7 @@ const parseCsv = (file: File) =>
   })
 
 const parseWorkbook = async (file: File): Promise<UploadResult> => {
-  const buffer = await file.arrayBuffer()
-  const workbook = XLSX.read(buffer, { type: 'array' })
-  const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
-  const matrix = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, {
-    header: 1,
-    defval: '',
-  })
+  const matrix = await readXlsxFile(file)
 
   const [headerRow = [], ...bodyRows] = matrix
   validateHeaders(headerRow.map(normalizeHeader))
@@ -95,10 +89,16 @@ export const parseTicketsFile = (file: File) => {
   }
 
   if (extension === 'xlsx' || extension === 'xls') {
+    if (extension === 'xls') {
+      return Promise.reject(
+        new Error('Formato .xls legado não suportado. Converta para .xlsx ou CSV.'),
+      )
+    }
+
     return parseWorkbook(file)
   }
 
   return Promise.reject(
-    new Error('Formato não suportado. Envie um arquivo CSV, XLS ou XLSX.'),
+    new Error('Formato não suportado. Envie um arquivo CSV ou XLSX.'),
   )
 }

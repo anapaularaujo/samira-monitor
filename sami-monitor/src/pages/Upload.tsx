@@ -67,13 +67,13 @@ export function Upload({ onUpload, lastImportedFile }: UploadProps) {
             Arraste o arquivo ou selecione manualmente
           </h3>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-            Formatos aceitos: .csv, .xls e .xlsx. A validação impede colunas fora
+            Formatos aceitos: .csv e .xlsx. A validação impede colunas fora
             da ordem esperada.
           </p>
           <input
             ref={inputRef}
             type="file"
-            accept=".csv,.xls,.xlsx"
+            accept=".csv,.xlsx"
             className="hidden"
             onChange={(event) => void handleFiles(event.target.files)}
           />
