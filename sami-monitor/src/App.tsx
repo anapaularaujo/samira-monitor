@@ -1,13 +1,28 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { routes } from './routes'
 import type { RouteKey, SupportTicket } from './types'
 import { mockTickets } from './utils/mockData'
-import { AnaliseDetalhada } from './pages/AnaliseDetalhada'
-import { Configuracoes } from './pages/Configuracoes'
-import { Dashboard } from './pages/Dashboard'
-import { Relatorios } from './pages/Relatorios'
-import { Upload } from './pages/Upload'
+
+const Dashboard = lazy(() =>
+  import('./pages/Dashboard').then((module) => ({ default: module.Dashboard })),
+)
+const Upload = lazy(() =>
+  import('./pages/Upload').then((module) => ({ default: module.Upload })),
+)
+const AnaliseDetalhada = lazy(() =>
+  import('./pages/AnaliseDetalhada').then((module) => ({
+    default: module.AnaliseDetalhada,
+  })),
+)
+const Relatorios = lazy(() =>
+  import('./pages/Relatorios').then((module) => ({ default: module.Relatorios })),
+)
+const Configuracoes = lazy(() =>
+  import('./pages/Configuracoes').then((module) => ({
+    default: module.Configuracoes,
+  })),
+)
 
 function App() {
   const [activeRoute, setActiveRoute] = useState<RouteKey>('dashboard')
@@ -94,7 +109,15 @@ function App() {
               </div>
             </div>
 
-            {renderPage()}
+            <Suspense
+              fallback={
+                <div className="rounded-3xl border border-slate-200 bg-white p-8 text-sm font-semibold text-slate-500 shadow-soft">
+                  Carregando módulo...
+                </div>
+              }
+            >
+              {renderPage()}
+            </Suspense>
           </div>
         </main>
       </div>
